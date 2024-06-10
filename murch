@@ -1,0 +1,25 @@
+import datasets
+from transformers import AutoTokenizer
+
+# Step 1: Load the dataset
+dataset = datasets.load_dataset('pszemraj/scientific_lay_summarisation-plos-norm')
+
+# Step 2: Load the tokenizer
+tokenizer = AutoTokenizer.from_pretrained('mistralai/Mistral-7B-Instruct-v0.1')
+
+# Step 3: Tokenize the 'article' column and count tokens
+def count_tokens(example):
+    return {'token_count': len(tokenizer(example['article'], truncation=False)['input_ids'])}
+
+dataset = dataset.map(count_tokens, batched=False)
+
+# Step 4: Filter out articles with more than 9000 tokens
+filtered_dataset = dataset.filter(lambda example: example['token_count'] <= 9000)
+
+# Step 5: Save the filtered dataset in Hugging Face format
+filtered_dataset.save_to_disk('filtered_dataset')
+
+from datasets import load_from_disk
+
+# Load the filtered dataset
+filtered_dataset = load_from_disk('filtered_dataset')
